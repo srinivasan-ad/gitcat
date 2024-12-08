@@ -18,4 +18,6 @@ app.use(express.json())
         res.json({mssg : "User exists please login  !"})
     }
  })
- app.listen()
+ app.listen(5000,() => {
+    console.log("Server started n port http://localhost:5000")
+ })
