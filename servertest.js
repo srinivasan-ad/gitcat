@@ -33,9 +33,20 @@ function createRepo(userName,repoName){
             console.log(err)
         })
         console.log(`repo ${repoName} created successfully`)
-        
+        const gitcmd = `git init --bare "${bareDirpath}"`
+        cp.exec(gitcmd,(error,stdout) => {
+           if(error) console.log(error)
+            else{
+        console.log(stdout)
+            }
+        }) 
+        const dataDir = path.join(__dirname, `gitcat/${userName}/${repoName}/data`)
+        fs.mkdir(dataDir,(err) => {
+           if(err) console.log(err)
+           else console.log("Data in repo created")       
+        })  
     }
 }
 // createUser('Manoja')
-login("Aditya")
-// createRepo('Aditya','test-repo2')
+// login("Aditya")
+createRepo('Aditya','test-repo4')

@@ -2,6 +2,8 @@ const express = require('express')
 const fs = require('fs')
 const cp = require('child_process')
 const path = require('path')
+const { error } = require('console')
+const { stdout } = require('process')
 const app = express()
 app.use(express.json())
  app.post('/signup', (req,res) => {
@@ -41,6 +43,18 @@ app.use(express.json())
         fs.mkdir(Dirpath,(err) => {
             console.log(err)
         })
+       const gitcmd = `git init --bare "${bareDirpath}"`
+        cp.exec(gitcmd,(error,stdout) => {
+           if(error) res.json({mssg : `${error}`})
+            else{
+        res.json({mssg : `${stdout}`})
+            }
+        })
+        const dataDir = path.join(__dirname, `gitcat/${userName}/${repoName}/data`)
+        fs.mkdir(dataDir,(err) => {
+           if(err) console.log(err)
+           else console.log("Data in repo created")       
+        })  
         
     }
  })
