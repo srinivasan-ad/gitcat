@@ -25,5 +25,17 @@ function login(userName) {
         })
     }
 }
+function createRepo(userName,repoName){
+    const Dirpath = path.join(__dirname , `gitcat/${userName}/${repoName}`)
+    const bareDirpath = path.join(__dirname,`gitcat/${userName}/${repoName}/${repoName}.git`) 
+    if(!fs.existsSync(Dirpath)){
+        fs.mkdir(Dirpath,(err) => {
+            console.log(err)
+        })
+        console.log(`repo ${repoName} created successfully`)
+        
+    }
+}
 // createUser('Manoja')
 login("Aditya")
+// createRepo('Aditya','test-repo2')
