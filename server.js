@@ -2,10 +2,11 @@ const express = require('express')
 const fs = require('fs')
 const cp = require('child_process')
 const path = require('path')
-const { error } = require('console')
-const { stdout } = require('process')
+const stream = require('stream');
+
 const app = express()
 app.use(express.json())
+const REPO_DIR = path.join(__dirname,`gitcat`)
  app.post('/signup', (req,res) => {
    const {userName} = req.body
     const Dirpath = path.join(__dirname,`gitcat/${userName}`)
@@ -40,24 +41,63 @@ app.use(express.json())
     const Dirpath = path.join(__dirname , `gitcat/${userName}/${repoName}`)
     const bareDirpath = path.join(__dirname,`gitcat/${userName}/${repoName}/${repoName}.git`) 
     if(!fs.existsSync(Dirpath)){
-        fs.mkdir(Dirpath,(err) => {
+        fs.mkdir(Dirpath,{ recursive: true },(err) => {
             console.log(err)
         })
-       const gitcmd = `git init --bare "${bareDirpath}"`
+        console.log(`repo ${repoName} created successfully`)
+        const gitcmd = `git init --bare "${bareDirpath}"`
         cp.exec(gitcmd,(error,stdout) => {
-           if(error) res.json({mssg : `${error}`})
+           if(error) console.log(error)
             else{
-        res.json({mssg : `${stdout}`})
+        console.log(stdout)
             }
-        })
+        }) 
         const dataDir = path.join(__dirname, `gitcat/${userName}/${repoName}/data`)
-        fs.mkdir(dataDir,(err) => {
+        fs.mkdir(dataDir,{ recursive: true },(err) => {
            if(err) console.log(err)
            else console.log("Data in repo created")       
-        })  
-        
-    }
+        }) 
+        const hooksDir = path.join(__dirname, `gitcat/${userName}/${repoName}/${repoName}.git/hooks`);
+        fs.mkdir(hooksDir, { recursive: true }, (err) => {
+          if (err) {
+            console.error('Error creating hooks directory:', err);
+            return;
+          }
+
+          const postReceiveFile = path.join(hooksDir, 'post-receive');
+          const script = `
+#!/bin/bash
+# Paths
+GIT_DIR="${bareDirpath}"
+WORK_TREE="${dataDir}"
+
+# Force checkout the latest changes into the working tree
+git --work-tree=$WORK_TREE --git-dir=$GIT_DIR checkout -f main
+
+# Optional: Log the update for debugging
+echo "$(date): Synced working tree with main branch" >> /home/aditya-s/git-sync.log
+`;
+
+          fs.writeFile(postReceiveFile, script, (err) => {
+            if (err) {
+              console.error('Error writing post-receive script:', err);
+            } else {
+              fs.chmod(postReceiveFile, 0o755, (chmodErr) => {
+                if (chmodErr) {
+                  console.error('Error setting permissions on post-receive script:', chmodErr);
+                } else {
+                  console.log('post-receive script created and permissions set successfully');
+                  res.json({mssg : "repo created successfully :)"})
+                }
+              });
+            }
+          });
+    })
+}
  })
+
+
+ 
  app.listen(5000,() => {
     console.log("Server started n port http://localhost:5000")
  })
