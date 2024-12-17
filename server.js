@@ -96,6 +96,68 @@ echo "$(date): Synced working tree with main branch" >> /home/aditya-s/git-sync.
 }
  })
 
+app.get("/:username/:repo.git/info/refs", (req, res) => {
+  try {
+    const repo = req.params.repo;
+    const gitCmd = req.query.service;
+    console.log(req.method);
+    console.log(req.query.service);
+    const user_name = req.params.username;
+    const repoLink = path.join(REPO_DIR, `${user_name}/${repo}/` + repo + ".git");
+    console.log(repoLink);
+    const gitProcess = cp.spawn(gitCmd, [
+      repoLink,
+      "--http-backend-info-refs",
+      "--stateless-rpc",
+      "--advertise-refs",
+    ]);
+
+    // req.pipe(gitProcess.stdin);
+    req.on("data", (data) => {
+      console.log("Data Req: ", data.toString());
+    });
+    res.on("data", (data) => {
+      console.log("Data Res: ", data.toString());
+    });
+    gitProcess.stdout.on("data", (data) => {
+      console.log("Data Process: ", data.toString());
+    });
+    // 001f# service=git-receive-pack
+    const appendTransform = new stream.Transform({
+      transform(chunk, encoding, callback) {
+        const originalData = chunk.toString();
+        let customText = "";
+        if (gitCmd === "git-upload-pack") {
+          customText = `001e# service=${gitCmd}\n0000`;
+        } else if (gitCmd === "git-receive-pack") {
+          customText = `001f# service=${gitCmd}\n0000`;
+        } 
+        this.push(customText + originalData);
+        callback();
+      },
+    });
+    res.setHeader("content-type", `application/x-${gitCmd}-advertisement`);
+    req.pipe(gitProcess.stdin);
+    res.status(200);
+    gitProcess.stdout.pipe(appendTransform).pipe(res);
+    gitProcess.stderr.pipe(process.stderr);
+
+    gitProcess.on("error", (err) => {
+      res.status(500).send("Git process error");
+      console.log(`Git process error: ${err}`);
+    });
+
+    gitProcess.on("exit", (code) => {
+      res.status(200).end();
+      console.log(`\nGit process exited with code ${code}`);
+    });
+  } catch (error) {
+    res.status(400).send("Error, please try again!");
+    console.log("In error: ");
+    console.log(error);
+  }
+});
+
 
  
  app.listen(5000,() => {
