@@ -203,7 +203,50 @@ app.post("/:username/:repo.git/git-receive-pack", (req, res) => {
   }
 });
 
+// Handle the Git fetch operation (git-upload-pack)
+app.post("/:username/:repo.git/git-upload-pack", (req, res) => {
+  try {
+    const repo = req.params.repo;
+    const gitCmd = "git-upload-pack";
+    console.log(req.method, req.body);
+    console.log(req.query.service);
+    const user_name = req.params.username;
+    const repoLink = path.join(REPO_DIR, `${user_name}/${repo}/` + repo + ".git");
+    console.log(repoLink);
+    const gitProcess = cp.spawn(gitCmd, [repoLink, "--stateless-rpc"]);
+    req.on("data", (data) => {
+      console.log("Data Req: ", data.toString());
+    });
+    res.on("data", (data) => {
+      console.log("Data Res: ", data.toString());
+    });
+    gitProcess.stdout.on("data", (data) => {
+      console.log("Data Process: ", data.toString());
+    });
+    res.status(200);
+    res.setHeader(
+      "content-type",
+      "application/x-git-upload-pack-advertisement"
+    );
+    req.pipe(gitProcess.stdin);
+    gitProcess.stdout.pipe(res);
+    gitProcess.stderr.pipe(process.stderr);
 
+    gitProcess.on("error", (err) => {
+      res.status(500).send("Git process error");
+      console.log(`Git process error: ${err}`);
+    });
+
+    gitProcess.on("exit", (code) => {
+      res.status(200).end();
+      console.log(`\nGit process exited with code ${code}`);
+    });
+  } catch (error) {
+    res.status(400).send("Error, please try again!");
+    console.log("In error: ");
+    console.log(error);
+  }
+});
  
  
  app.listen(5000,() => {
