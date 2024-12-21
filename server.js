@@ -3,7 +3,8 @@ const fs = require('fs')
 const cp = require('child_process')
 const path = require('path')
 const stream = require('stream');
-
+const { error } = require('console')
+const { stdout } = require('process')
 const app = express()
 app.use(express.json())
 const REPO_DIR = path.join(__dirname,`gitcat`)
