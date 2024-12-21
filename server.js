@@ -22,6 +22,7 @@ const REPO_DIR = path.join(__dirname,`gitcat`)
         res.json({mssg : "User exists please login  !"})
     }
  })
+ //login route
 
  app.post('/login',(req,res) => {
     const {userName} = req.body
@@ -36,6 +37,7 @@ const REPO_DIR = path.join(__dirname,`gitcat`)
         res.json({mssg : "User does not exist signup"})
     }
  })
+ // route for creating remove working tree part if not needed 
 
  app.post('/create-repo',(req,res) => {
     const {userName,repoName} = req.body
@@ -96,8 +98,9 @@ echo "$(date): Synced working tree with main branch" >> /home/aditya-s/git-sync.
     })
 }
  })
+ //route for refs 
 
-app.get("/:username/:repo.git/info/refs", (req, res) => {
+app.get("/gitcat/:username/:repo.git/info/refs", (req, res) => {
   try {
     const repo = req.params.repo;
     const gitCmd = req.query.service;
@@ -159,8 +162,8 @@ app.get("/:username/:repo.git/info/refs", (req, res) => {
   }
 });
 
-// Handle the Git push operation (git-receive-pack)
-app.post("/:username/:repo.git/git-receive-pack", (req, res) => {
+// Handle the Git push operation 
+app.post("/gitcat/:username/:repo.git/git-receive-pack", (req, res) => {
   try {
     const repo = req.params.repo;
     const gitCmd = "git-receive-pack";
@@ -205,7 +208,7 @@ app.post("/:username/:repo.git/git-receive-pack", (req, res) => {
 });
 
 // Handle the Git fetch operation (git-upload-pack)
-app.post("/:username/:repo.git/git-upload-pack", (req, res) => {
+app.post("/gitcat/:username/:repo.git/git-upload-pack", (req, res) => {
   try {
     const repo = req.params.repo;
     const gitCmd = "git-upload-pack";
